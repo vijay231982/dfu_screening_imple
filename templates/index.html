@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DFU Ensemble Screening</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f1ece4;
+            --panel: #fffaf4;
+            --panel-strong: #fff;
+            --border: #d6c2a8;
+            --text: #2b211c;
+            --muted: #715f53;
+            --accent: #ae4f2f;
+            --accent-dark: #7f351d;
+            --success: #2f6f4f;
+            --error: #a63d40;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 24px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(174, 79, 47, 0.18), transparent 28%),
+                linear-gradient(140deg, #fbf6ef, var(--bg));
+        }
+
+        .shell {
+            width: min(1100px, 100%);
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: 0 24px 50px rgba(43, 33, 28, 0.12);
+            overflow: hidden;
+        }
+
+        .hero {
+            padding: 30px 32px 18px;
+            border-bottom: 1px solid rgba(214, 194, 168, 0.7);
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: 2.1rem;
+        }
+
+        .hero p {
+            margin: 0;
+            line-height: 1.55;
+            color: var(--muted);
+            max-width: 760px;
+        }
+
+        .layout {
+            display: grid;
+            gap: 24px;
+            padding: 24px 32px 32px;
+        }
+
+        @media (min-width: 900px) {
+            .layout {
+                grid-template-columns: 340px minmax(0, 1fr);
+                align-items: start;
+            }
+        }
+
+        .panel {
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .panel h2, .panel h3 {
+            margin-top: 0;
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        }
+
+        .notice {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+        }
+
+        .success {
+            background: rgba(47, 111, 79, 0.12);
+            color: var(--success);
+        }
+
+        .error {
+            background: rgba(166, 61, 64, 0.12);
+            color: var(--error);
+        }
+
+        .preview img {
+            display: block;
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .placeholder {
+            min-height: 260px;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            text-align: center;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            color: var(--muted);
+        }
+
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        @media (min-width: 720px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(174, 79, 47, 0.1);
+            color: var(--accent-dark);
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .metric {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        .prediction-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .prediction-item {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(174, 79, 47, 0.08);
+        }
+
+        .prediction-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .headline-result {
+            padding: 18px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(174, 79, 47, 0.12), rgba(127, 53, 29, 0.06));
+            border: 1px solid rgba(174, 79, 47, 0.2);
+        }
+
+        .headline-result h2 {
+            margin-bottom: 10px;
+        }
+
+        .probability-row {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        @media (min-width: 680px) {
+            .probability-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .probability-card {
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <h1>DFU Image Ensemble Screening</h1>
+            <p>Upload an image to run three pretrained CNN candidates, each paired with a different optimizer configuration, then apply a genetic algorithm to select the best ensemble mix for this image.</p>
+        </section>
+
+        <section class="layout">
+            <aside class="panel">
+                <h2>Upload</h2>
+                <p>Files are stored in <code>{{ upload_dir }}</code>.</p>
+
+                <form method="post" enctype="multipart/form-data">
+                    <input type="file" name="image" accept="image/*" required>
+                    <button type="submit">Upload And Run Ensemble</button>
+                </form>
+
+                {% if message %}
+                    <div class="notice success">{{ message }} Saved as <code>{{ saved_file }}</code>.</div>
+                {% endif %}
+
+                {% if error %}
+                    <div class="notice error">{{ error }}</div>
+                {% endif %}
+
+                {% if inference_ms %}
+                    <p class="metric">Total pipeline time: {{ "%.1f"|format(inference_ms) }} ms</p>
+                {% endif %}
+            </aside>
+
+            <section class="stack">
+                <div class="panel preview">
+                    {% if image_url %}
+                        <img src="{{ image_url }}" alt="Uploaded image preview">
+                    {% else %}
+                        <div class="placeholder">
+                            Upload an image to view the preview, per-model predictions, and the GA-selected ensemble output.
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if skin_assessment %}
+                    <div class="panel headline-result">
+                        <h2>Skin Classification</h2>
+                        <span class="chip">{{ skin_assessment.label }}</span>
+
+                        <div class="probability-row">
+                            <div class="probability-card">
+                                <strong>Normal Skin</strong>
+                                <p class="metric">{{ "%.2f"|format(skin_assessment.normal_probability) }}%</p>
+                            </div>
+                            <div class="probability-card">
+                                <strong>Abnormal Skin</strong>
+                                <p class="metric">{{ "%.2f"|format(skin_assessment.abnormal_probability) }}%</p>
+                            </div>
+                        </div>
+
+                        <div class="prediction-list">
+                            <div class="prediction-item">
+                                <strong>Redness Signal</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.redness) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Contrast Signal</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.contrast) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Dark Region Ratio</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.dark_ratio) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Edge Density</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.edge_density) }}%
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if ensemble_result %}
+                    <div class="panel">
+                        <h2>Genetic Algorithm Ensemble</h2>
+                        <span class="chip">GA Fitness {{ "%.4f"|format(ensemble_result.fitness) }}</span>
+                        {% for member in ensemble_result.members %}
+                            <span class="chip">{{ member.model_name }} + {{ member.optimizer_name }}: {{ "%.1f"|format(member.weight) }}%</span>
+                        {% endfor %}
+
+                        <div class="prediction-list">
+                            {% for prediction in ensemble_result.top_predictions %}
+                                <div class="prediction-item">
+                                    <strong>{{ prediction.label }}</strong>
+                                    Confidence: {{ "%.2f"|format(prediction.confidence) }}%
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if candidate_results %}
+                    <div class="grid">
+                        {% for candidate in candidate_results %}
+                            <article class="panel">
+                                <h3>{{ candidate.model_name }}</h3>
+                                <span class="chip">Optimizer {{ candidate.optimizer_name }}</span>
+                                <span class="chip">{{ "%.1f"|format(candidate.inference_ms) }} ms</span>
+                                <p class="metric">Top class: <strong>{{ candidate.top_label }}</strong> ({{ "%.2f"|format(candidate.top_confidence) }}%)</p>
+                                <p class="metric">Normal: <strong>{{ "%.2f"|format(candidate.normal_probability) }}%</strong> | Abnormal: <strong>{{ "%.2f"|format(candidate.abnormal_probability) }}%</strong></p>
+
+                                <div class="prediction-list">
+                                    {% for prediction in candidate.top_predictions %}
+                                        <div class="prediction-item">
+                                            <strong>{{ prediction.label }}</strong>
+                                            Confidence: {{ "%.2f"|format(prediction.confidence) }}%
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        </section>
+    </main>
+</body>
+</html>
