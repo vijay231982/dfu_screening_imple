@@ -35,7 +35,7 @@
         }
 
         .shell {
-            width: min(1100px, 100%);
+            width: min(1440px, 100%);
             margin: 0 auto;
             background: var(--panel);
             border: 1px solid var(--border);
@@ -67,9 +67,9 @@
             padding: 24px 32px 32px;
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 980px) {
             .layout {
-                grid-template-columns: 340px minmax(0, 1fr);
+                grid-template-columns: 320px minmax(0, 1fr);
                 align-items: start;
             }
         }
@@ -227,6 +227,253 @@
             background: rgba(255, 255, 255, 0.78);
             border: 1px solid var(--border);
         }
+
+        .debug-panel {
+            background: rgba(43, 33, 28, 0.04);
+            border-style: dashed;
+        }
+
+        .metrics-panel {
+            background: rgba(53, 92, 125, 0.06);
+            border-style: dashed;
+        }
+
+        .debug-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        @media (min-width: 680px) {
+            .debug-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .debug-item {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(214, 194, 168, 0.8);
+        }
+
+        .debug-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .debug-plot {
+            margin: 0 0 16px;
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(214, 194, 168, 0.8);
+        }
+
+        .debug-plot img {
+            display: block;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .dataset-panel {
+            display: grid;
+            gap: 18px;
+        }
+
+        .dataset-panel h3 {
+            margin-bottom: 10px;
+        }
+
+        .dataset-plots {
+            display: grid;
+            gap: 16px;
+        }
+
+        @media (min-width: 1040px) {
+            .dataset-plots {
+                grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+                align-items: start;
+            }
+        }
+
+        .dataset-plot-card {
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(214, 194, 168, 0.8);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .dataset-plot-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(214, 194, 168, 0.7);
+            background: #fff;
+        }
+
+        .section-copy {
+            margin: 0 0 12px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .chart-panel {
+            overflow: hidden;
+        }
+
+        .chart-panel h3 {
+            margin-bottom: 8px;
+        }
+
+        .chart-copy {
+            margin: 0 0 16px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .chart-surface {
+            position: relative;
+            background:
+                radial-gradient(circle at top left, rgba(174, 79, 47, 0.16), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(59, 103, 144, 0.16), transparent 30%),
+                linear-gradient(180deg, rgba(255, 250, 244, 0.98), rgba(247, 239, 230, 0.95));
+            border: 1px solid rgba(214, 194, 168, 0.8);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        }
+
+        .chart-surface.line-chart {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(255, 255, 255, 0.1),
+                    rgba(255, 255, 255, 0.1) 1px,
+                    transparent 1px,
+                    transparent 32px
+                ),
+                radial-gradient(circle at top left, rgba(174, 79, 47, 0.22), transparent 28%),
+                linear-gradient(135deg, rgba(251, 246, 239, 0.98), rgba(236, 227, 216, 0.95));
+        }
+
+        .chart-surface canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            min-width: 160px;
+            max-width: 220px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(43, 33, 28, 0.12);
+            background: rgba(43, 33, 28, 0.94);
+            color: #fff;
+            font-size: 0.86rem;
+            line-height: 1.4;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 120ms ease, transform 120ms ease;
+            z-index: 2;
+        }
+
+        .chart-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            margin-top: 14px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            flex: 0 0 auto;
+        }
+
+        .chart-empty {
+            margin: 0;
+            padding: 18px;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(214, 194, 168, 0.8);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 860px;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(214, 194, 168, 0.7);
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: rgba(174, 79, 47, 0.08);
+        }
+
+        td:first-child, th:first-child {
+            min-width: 220px;
+        }
+
+        td:not(:first-child), th:not(:first-child) {
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .dataset-summary {
+            display: grid;
+            gap: 12px;
+        }
+
+        @media (min-width: 680px) {
+            .dataset-summary {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        .table-card {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(214, 194, 168, 0.8);
+            background: rgba(255, 255, 255, 0.72);
+        }
     </style>
 </head>
 <body>
@@ -272,16 +519,16 @@
 
                 {% if skin_assessment %}
                     <div class="panel headline-result">
-                        <h2>Skin Classification</h2>
+                        <h2>DFU Screening Classification</h2>
                         <span class="chip">{{ skin_assessment.label }}</span>
 
                         <div class="probability-row">
                             <div class="probability-card">
-                                <strong>Normal Skin</strong>
+                                <strong>Healthy Skin</strong>
                                 <p class="metric">{{ "%.2f"|format(skin_assessment.normal_probability) }}%</p>
                             </div>
                             <div class="probability-card">
-                                <strong>Abnormal Skin</strong>
+                                <strong>Ulcer Skin</strong>
                                 <p class="metric">{{ "%.2f"|format(skin_assessment.abnormal_probability) }}%</p>
                             </div>
                         </div>
@@ -303,6 +550,108 @@
                                 <strong>Edge Density</strong>
                                 {{ "%.2f"|format(skin_assessment.visual_features.edge_density) }}%
                             </div>
+                            <div class="prediction-item">
+                                <strong>Ulcer Region Ratio</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.ulcer_ratio) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Inflammation Signal</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.inflamed_ratio) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Central Ulcer Focus</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.center_ulcer_ratio) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Healthy Region Ratio</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.healthy_ratio) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Center Uniformity</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.center_uniformity) }}%
+                            </div>
+                            <div class="prediction-item">
+                                <strong>Smooth Texture</strong>
+                                {{ "%.2f"|format(skin_assessment.visual_features.smooth_texture) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel debug-panel">
+                        <h3>Debug Scores</h3>
+                        <p class="chart-copy">Use these internal values to understand why an upload tilted toward ulcer or healthy classification.</p>
+
+                        {% if debug_plot_url %}
+                            <div class="debug-plot">
+                                <img src="{{ debug_plot_url }}" alt="Debug scores chart">
+                            </div>
+                        {% endif %}
+
+                        <div class="debug-grid">
+                            <div class="debug-item">
+                                <strong>Candidate Ulcer Probability</strong>
+                                <span>{{ "%.2f"|format(skin_assessment.debug_scores.candidate_ulcer_probability) }}%</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Visual Ulcer Probability</strong>
+                                <span>{{ "%.2f"|format(skin_assessment.debug_scores.visual_ulcer_probability) }}%</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Visual Healthy Probability</strong>
+                                <span>{{ "%.2f"|format(skin_assessment.debug_scores.visual_healthy_probability) }}%</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Final Ulcer Score</strong>
+                                <span>{{ "%.2f"|format(skin_assessment.debug_scores.final_ulcer_score) }}%</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Final Healthy Score</strong>
+                                <span>{{ "%.2f"|format(skin_assessment.debug_scores.final_healthy_score) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if classification_metrics %}
+                        <div class="panel metrics-panel">
+                            <h3>Estimated Classification Metrics</h3>
+                            <p class="chart-copy">These are confidence and model-agreement based estimates for this uploaded image, not dataset-level validation metrics.</p>
+
+                            {% if metrics_plot_url %}
+                                <div class="debug-plot">
+                                    <img src="{{ metrics_plot_url }}" alt="Estimated classification metrics chart">
+                                </div>
+                            {% endif %}
+
+                            <div class="debug-grid">
+                                <div class="debug-item">
+                                    <strong>Accuracy</strong>
+                                    <span>{{ "%.2f"|format(classification_metrics.accuracy) }}%</span>
+                                </div>
+                                <div class="debug-item">
+                                    <strong>Precision</strong>
+                                    <span>{{ "%.2f"|format(classification_metrics.precision) }}%</span>
+                                </div>
+                                <div class="debug-item">
+                                    <strong>Recall</strong>
+                                    <span>{{ "%.2f"|format(classification_metrics.recall) }}%</span>
+                                </div>
+                                <div class="debug-item">
+                                    <strong>F1-score</strong>
+                                    <span>{{ "%.2f"|format(classification_metrics.f1_score) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if candidate_results %}
+                    <div class="panel chart-panel">
+                        <h2>Execution Time per Optimizer</h2>
+
+                        <p class="chart-copy">This graph compares the measured inference time for each model-optimizer pair in the current run.</p>
+                        <div class="chart-surface line-chart">
+                            <canvas id="optimizer-time-chart" width="720" height="320" aria-label="Optimizer execution time chart"></canvas>
+                            <div class="chart-tooltip" id="optimizer-time-tooltip"></div>
                         </div>
                     </div>
                 {% endif %}
@@ -326,6 +675,124 @@
                     </div>
                 {% endif %}
 
+                <div class="panel dataset-panel">
+                    <h2>Dataset Evaluation</h2>
+                    {% if dataset_evaluation %}
+                        <p class="chart-copy">Dataset-driven evaluation is active from <code>{{ dataset_evaluation.dataset_dir }}</code>. Folder names must encode class labels such as <code>healthy</code> and <code>ulcer</code>.</p>
+
+                        <div class="dataset-summary">
+                            <div class="debug-item">
+                                <strong>Total Samples</strong>
+                                <span>{{ dataset_evaluation.sample_count }}</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Healthy Samples</strong>
+                                <span>{{ dataset_evaluation.healthy_count }}</span>
+                            </div>
+                            <div class="debug-item">
+                                <strong>Ulcer Samples</strong>
+                                <span>{{ dataset_evaluation.ulcer_count }}</span>
+                            </div>
+                        </div>
+
+                        <div class="dataset-plots">
+                            <div class="dataset-plot-card">
+                                <h3>ROC Curve And GA Convergence</h3>
+                                <p class="section-copy">The left plot shows discrimination across thresholds. The right plot shows how the genetic algorithm fitness stabilizes over generations.</p>
+                                <img src="{{ dataset_evaluation.roc_plot_url }}" alt="ROC and convergence graph">
+                            </div>
+
+                            <div class="dataset-plot-card">
+                                <h3>Confusion Matrix</h3>
+                                <p class="section-copy">Confusion counts for the proposed method on the labeled evaluation dataset.</p>
+                                <img src="{{ dataset_evaluation.confusion_plot_url }}" alt="Confusion matrix">
+                                <div class="debug-grid" style="margin-top: 14px;">
+                                    <div class="debug-item">
+                                        <strong>True Positive</strong>
+                                        <span>{{ dataset_evaluation.proposed_metrics.tp }}</span>
+                                    </div>
+                                    <div class="debug-item">
+                                        <strong>True Negative</strong>
+                                        <span>{{ dataset_evaluation.proposed_metrics.tn }}</span>
+                                    </div>
+                                    <div class="debug-item">
+                                        <strong>False Positive</strong>
+                                        <span>{{ dataset_evaluation.proposed_metrics.fp }}</span>
+                                    </div>
+                                    <div class="debug-item">
+                                        <strong>False Negative</strong>
+                                        <span>{{ dataset_evaluation.proposed_metrics.fn }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-card">
+                            <h3>Ablation Study</h3>
+                            <p class="section-copy">This table shows the contribution of visual heuristics, ensemble averaging, and GA-driven selection to the final performance.</p>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Variant</th>
+                                            <th>Accuracy</th>
+                                            <th>Precision</th>
+                                            <th>Recall</th>
+                                            <th>F1-score</th>
+                                            <th>AUC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in dataset_evaluation.ablation_rows %}
+                                            <tr>
+                                                <td>{{ row.label }}</td>
+                                                <td>{{ "%.2f"|format(row.accuracy) }}%</td>
+                                                <td>{{ "%.2f"|format(row.precision) }}%</td>
+                                                <td>{{ "%.2f"|format(row.recall) }}%</td>
+                                                <td>{{ "%.2f"|format(row.f1_score) }}%</td>
+                                                <td>{{ "%.2f"|format(row.auc) }}%</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="table-card">
+                            <h3>Comparison With Existing Methods</h3>
+                            <p class="section-copy">This table compares the proposed GA plus visual-feature method against the current baseline models and a non-optimized ensemble.</p>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Method</th>
+                                            <th>Accuracy</th>
+                                            <th>Precision</th>
+                                            <th>Recall</th>
+                                            <th>F1-score</th>
+                                            <th>AUC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in dataset_evaluation.comparison_rows %}
+                                            <tr>
+                                                <td>{{ row.label }}</td>
+                                                <td>{{ "%.2f"|format(row.accuracy) }}%</td>
+                                                <td>{{ "%.2f"|format(row.precision) }}%</td>
+                                                <td>{{ "%.2f"|format(row.recall) }}%</td>
+                                                <td>{{ "%.2f"|format(row.f1_score) }}%</td>
+                                                <td>{{ "%.2f"|format(row.auc) }}%</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="chart-empty">Add a labeled dataset under <code>evaluation_dataset/</code> with class folders such as <code>healthy/</code> and <code>ulcer/</code> to enable ROC, confusion matrix, ablation, and comparison reporting.</p>
+                    {% endif %}
+                </div>
+
                 {% if candidate_results %}
                     <div class="grid">
                         {% for candidate in candidate_results %}
@@ -334,7 +801,7 @@
                                 <span class="chip">Optimizer {{ candidate.optimizer_name }}</span>
                                 <span class="chip">{{ "%.1f"|format(candidate.inference_ms) }} ms</span>
                                 <p class="metric">Top class: <strong>{{ candidate.top_label }}</strong> ({{ "%.2f"|format(candidate.top_confidence) }}%)</p>
-                                <p class="metric">Normal: <strong>{{ "%.2f"|format(candidate.normal_probability) }}%</strong> | Abnormal: <strong>{{ "%.2f"|format(candidate.abnormal_probability) }}%</strong></p>
+                                <p class="metric">Healthy: <strong>{{ "%.2f"|format(candidate.normal_probability) }}%</strong> | Ulcer: <strong>{{ "%.2f"|format(candidate.abnormal_probability) }}%</strong></p>
 
                                 <div class="prediction-list">
                                     {% for prediction in candidate.top_predictions %}
@@ -351,5 +818,176 @@
             </section>
         </section>
     </main>
+
+    {% if chart_candidate_results %}
+        <script>
+            const optimizerPalette = {
+                Adam: "#ae4f2f",
+                SGD: "#2f6f4f",
+                RMSprop: "#3b6790",
+            };
+
+            const candidateResults = {{ chart_candidate_results|tojson }};
+
+            function getOptimizerColor(name) {
+                return optimizerPalette[name] || "#715f53";
+            }
+
+            function resizeCanvasForDpr(canvas) {
+                const ratio = window.devicePixelRatio || 1;
+                const cssWidth = canvas.clientWidth || canvas.width;
+                const cssHeight = (cssWidth / canvas.width) * canvas.height;
+                canvas.style.height = `${cssHeight}px`;
+                canvas.width = Math.round(cssWidth * ratio);
+                canvas.height = Math.round(cssHeight * ratio);
+                const ctx = canvas.getContext("2d");
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                return { ctx, width: cssWidth, height: cssHeight };
+            }
+
+            function attachTooltip(canvas, tooltip, hitTest) {
+                function moveTooltip(event) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    const target = hitTest(x, y);
+
+                    if (!target) {
+                        tooltip.classList.remove("visible");
+                        return;
+                    }
+
+                    tooltip.innerHTML = target.html;
+                    tooltip.style.left = `${Math.min(x + 18, rect.width - 180)}px`;
+                    tooltip.style.top = `${Math.max(y - 12, 12)}px`;
+                    tooltip.classList.add("visible");
+                }
+
+                canvas.addEventListener("mousemove", moveTooltip);
+                canvas.addEventListener("mouseleave", () => tooltip.classList.remove("visible"));
+            }
+
+            function drawOptimizerTimeChart() {
+                const canvas = document.getElementById("optimizer-time-chart");
+                const tooltip = document.getElementById("optimizer-time-tooltip");
+                if (!canvas || !tooltip || !candidateResults.length) {
+                    return;
+                }
+
+                const { ctx, width, height } = resizeCanvasForDpr(canvas);
+                const margin = { top: 24, right: 24, bottom: 76, left: 58 };
+                const chartWidth = width - margin.left - margin.right;
+                const chartHeight = height - margin.top - margin.bottom;
+                const baselineY = margin.top + chartHeight;
+                const maxValue = Math.max(...candidateResults.map((item) => item.inference_ms), 1);
+                const stepX = candidateResults.length > 1 ? chartWidth / (candidateResults.length - 1) : 0;
+                const hitAreas = [];
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.strokeStyle = "rgba(113, 95, 83, 0.25)";
+                ctx.fillStyle = "#715f53";
+                ctx.font = "12px Segoe UI";
+                ctx.textAlign = "right";
+                ctx.lineWidth = 1;
+
+                const linePoints = candidateResults.map((item, index) => {
+                    const x = candidateResults.length > 1
+                        ? margin.left + (stepX * index)
+                        : margin.left + (chartWidth / 2);
+                    const y = baselineY - ((item.inference_ms / maxValue) * (chartHeight * 0.82));
+                    return {
+                        ...item,
+                        x,
+                        y,
+                        color: getOptimizerColor(item.optimizer_name),
+                    };
+                });
+
+                for (let row = 0; row <= 4; row += 1) {
+                    const value = (maxValue / 4) * (4 - row);
+                    const y = margin.top + (chartHeight / 4) * row;
+                    ctx.beginPath();
+                    ctx.moveTo(margin.left, y);
+                    ctx.lineTo(width - margin.right, y);
+                    ctx.stroke();
+                    ctx.fillText(`${value.toFixed(0)} ms`, margin.left - 8, y + 4);
+                }
+
+                ctx.beginPath();
+                linePoints.forEach((point, index) => {
+                    if (index === 0) {
+                        ctx.moveTo(point.x, point.y);
+                        return;
+                    }
+                    const previous = linePoints[index - 1];
+                    const controlX = (previous.x + point.x) / 2;
+                    ctx.bezierCurveTo(controlX, previous.y, controlX, point.y, point.x, point.y);
+                });
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#7f351d";
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(linePoints[0].x, baselineY);
+                linePoints.forEach((point, index) => {
+                    if (index === 0) {
+                        ctx.lineTo(point.x, point.y);
+                        return;
+                    }
+                    const previous = linePoints[index - 1];
+                    const controlX = (previous.x + point.x) / 2;
+                    ctx.bezierCurveTo(controlX, previous.y, controlX, point.y, point.x, point.y);
+                });
+                ctx.lineTo(linePoints[linePoints.length - 1].x, baselineY);
+                ctx.closePath();
+                const fillGradient = ctx.createLinearGradient(0, margin.top, 0, baselineY);
+                fillGradient.addColorStop(0, "rgba(174, 79, 47, 0.28)");
+                fillGradient.addColorStop(1, "rgba(174, 79, 47, 0.03)");
+                ctx.fillStyle = fillGradient;
+                ctx.fill();
+
+                linePoints.forEach((point) => {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 7, 0, Math.PI * 2);
+                    ctx.fillStyle = point.color;
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "rgba(255, 250, 244, 0.95)";
+                    ctx.stroke();
+
+                    ctx.fillStyle = point.color;
+                    ctx.font = "600 12px Segoe UI";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`${point.inference_ms.toFixed(1)} ms`, point.x, point.y - 14);
+
+                    ctx.fillStyle = "#2b211c";
+                    ctx.fillText(point.optimizer_name, point.x, baselineY + 18);
+                    ctx.font = "11px Segoe UI";
+                    ctx.fillStyle = "#715f53";
+                    ctx.fillText(point.model_name, point.x, baselineY + 36);
+
+                    hitAreas.push({
+                        x: point.x,
+                        y: point.y,
+                        radius: 14,
+                        html: `<strong>${point.optimizer_name}</strong><br>${point.model_name}<br>Execution: ${point.inference_ms.toFixed(2)} ms`,
+                    });
+                });
+
+                attachTooltip(canvas, tooltip, (x, y) =>
+                    hitAreas.find((area) =>
+                        Math.hypot(x - area.x, y - area.y) <= area.radius
+                    )
+                );
+            }
+
+            function renderCharts() {
+                drawOptimizerTimeChart();
+            }
+
+            window.addEventListener("load", renderCharts);
+            window.addEventListener("resize", renderCharts);
+        </script>
+    {% endif %}
 </body>
 </html>

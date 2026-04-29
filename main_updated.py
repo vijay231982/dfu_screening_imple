@@ -16,9 +16,7 @@ import matplotlib.pyplot as plt
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploaded_images"
-EVALUATION_DATASET_DIR = BASE_DIR / "evaluation_dataset"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "bmp", "webp"}
-DATASET_CACHE = {"signature": None, "result": None}
 
 MODEL_SPECS = [
     {
@@ -72,8 +70,6 @@ NORMAL_KEYWORDS = {
     "swimming trunks",
     "bath towel",
 }
-POSITIVE_LABEL_TOKENS = {"ulcer", "abnormal", "dfu", "positive", "infected", "wound", "lesion"}
-NEGATIVE_LABEL_TOKENS = {"healthy", "normal", "negative", "nonulcer", "non_ulcer", "clear", "benign"}
 
 
 def allowed_file(filename: str) -> bool:
@@ -183,7 +179,7 @@ def candidate_skin_probability(candidate: dict, visual_features: dict[str, float
     return float(sigmoid(raw_score))
 
 
-def run_candidate_models(image_path: Path) -> tuple[list[dict], float, dict[str, float]]:
+def run_candidate_models(image_path: Path) -> tuple[list[dict], float]:
     raw_image = prepare_image(image_path)
     candidates = []
     total_started_at = time.perf_counter()
@@ -261,7 +257,6 @@ def genetic_ensemble_selection(candidates: list[dict]) -> dict:
 
     best_weights = population[0]
     best_fitness = float("-inf")
-    convergence_history = []
 
     for _ in range(generations):
         scored = sorted(
@@ -273,7 +268,6 @@ def genetic_ensemble_selection(candidates: list[dict]) -> dict:
         if scored[0][0] > best_fitness:
             best_fitness = scored[0][0]
             best_weights = scored[0][1]
-        convergence_history.append(float(scored[0][0]))
 
         survivors = [weights for _, weights in scored[:4]]
         next_population = survivors.copy()
@@ -316,37 +310,6 @@ def genetic_ensemble_selection(candidates: list[dict]) -> dict:
         "top_predictions": top_predictions,
         "members": members,
         "fitness": best_fitness,
-        "convergence_history": convergence_history,
-    }
-
-
-def compute_visual_adjustment(visual_features: dict[str, float]) -> float:
-    return (
-        (visual_features["redness"] * 0.22)
-        + (visual_features["dark_ratio"] * 0.18)
-        + (visual_features["edge_density"] * 0.24)
-        - (visual_features["bright_ratio"] * 0.08)
-    )
-
-
-def blend_candidate_and_visual_probability(
-    candidate_ulcer_probability: float,
-    visual_features: dict[str, float],
-) -> dict[str, float]:
-    candidate_ulcer_probability = float(np.clip(candidate_ulcer_probability, 0.01, 0.99))
-    visual_adjustment = compute_visual_adjustment(visual_features)
-    visual_ulcer_probability = float(np.clip(candidate_ulcer_probability + visual_adjustment, 0.01, 0.99))
-    visual_healthy_probability = 1.0 - visual_ulcer_probability
-    abnormal_probability = float(np.clip((candidate_ulcer_probability * 0.75) + visual_adjustment, 0.01, 0.99))
-    normal_probability = 1.0 - abnormal_probability
-
-    return {
-        "candidate_ulcer_probability": candidate_ulcer_probability,
-        "visual_adjustment": visual_adjustment,
-        "visual_ulcer_probability": visual_ulcer_probability,
-        "visual_healthy_probability": visual_healthy_probability,
-        "abnormal_probability": abnormal_probability,
-        "normal_probability": normal_probability,
     }
 
 
@@ -367,9 +330,16 @@ def build_skin_assessment(
     if candidate_ulcer_probability == 0.0:
         candidate_ulcer_probability = float(np.mean([candidate["abnormal_probability"] for candidate in candidates])) / 100.0
 
-    blended_scores = blend_candidate_and_visual_probability(candidate_ulcer_probability, visual_features)
-    abnormal_probability = blended_scores["abnormal_probability"]
-    normal_probability = blended_scores["normal_probability"]
+    visual_adjustment = (
+        (visual_features["redness"] * 0.22)
+        + (visual_features["dark_ratio"] * 0.18)
+        + (visual_features["edge_density"] * 0.24)
+        - (visual_features["bright_ratio"] * 0.08)
+    )
+    visual_ulcer_probability = float(np.clip(candidate_ulcer_probability + visual_adjustment, 0.01, 0.99))
+    visual_healthy_probability = 1.0 - visual_ulcer_probability
+    abnormal_probability = float(np.clip((candidate_ulcer_probability * 0.75) + visual_adjustment, 0.01, 0.99))
+    normal_probability = 1.0 - abnormal_probability
     label = "Ulcer Skin" if abnormal_probability >= 0.5 else "Healthy Skin"
 
     return {
@@ -377,10 +347,9 @@ def build_skin_assessment(
         "abnormal_probability": abnormal_probability * 100,
         "normal_probability": normal_probability * 100,
         "debug_scores": {
-            "candidate_ulcer_probability": blended_scores["candidate_ulcer_probability"] * 100,
-            "visual_adjustment": blended_scores["visual_adjustment"] * 100,
-            "visual_ulcer_probability": blended_scores["visual_ulcer_probability"] * 100,
-            "visual_healthy_probability": blended_scores["visual_healthy_probability"] * 100,
+            "candidate_ulcer_probability": candidate_ulcer_probability * 100,
+            "visual_ulcer_probability": visual_ulcer_probability * 100,
+            "visual_healthy_probability": visual_healthy_probability * 100,
             "final_ulcer_score": abnormal_probability * 100,
             "final_healthy_score": normal_probability * 100,
         },
@@ -450,6 +419,7 @@ def generate_debug_scores_plot(debug_scores: dict[str, float], output_path: Path
     plt.close(figure)
 
 
+
 def compute_estimated_classification_metrics(
     candidates: list[dict],
     ensemble: dict,
@@ -483,17 +453,9 @@ def compute_estimated_classification_metrics(
     agreement_component = agreement
     fitness_component = float(np.clip(ensemble.get("fitness", 0.0), 0.0, 1.0))
 
-    accuracy = np.clip(
-        (0.55 * confidence_component) + (0.35 * agreement_component) + (0.10 * fitness_component),
-        0.0,
-        1.0,
-    )
+    accuracy = np.clip((0.55 * confidence_component) + (0.35 * agreement_component) + (0.10 * fitness_component), 0.0, 1.0)
     precision = np.clip((0.65 * confidence_component) + (0.35 * agreement_component), 0.0, 1.0)
-    recall = np.clip(
-        (0.50 * confidence_component) + (0.30 * agreement_component) + (0.20 * fitness_component),
-        0.0,
-        1.0,
-    )
+    recall = np.clip((0.50 * confidence_component) + (0.30 * agreement_component) + (0.20 * fitness_component), 0.0, 1.0)
 
     if precision + recall == 0:
         f1_score = 0.0
@@ -549,344 +511,6 @@ def generate_classification_metrics_plot(metrics: dict[str, float], output_path:
     plt.close(figure)
 
 
-def infer_dataset_label(image_path: Path, dataset_dir: Path) -> int | None:
-    try:
-        relative_parts = image_path.relative_to(dataset_dir).parts
-    except ValueError:
-        return None
-
-    token_pool = []
-    for part in relative_parts:
-        normalized = part.lower().replace("-", "_").replace(" ", "_")
-        token_pool.extend(token for token in normalized.split("_") if token)
-
-    if any(token in POSITIVE_LABEL_TOKENS for token in token_pool):
-        return 1
-    if any(token in NEGATIVE_LABEL_TOKENS for token in token_pool):
-        return 0
-    return None
-
-
-def collect_dataset_samples(dataset_dir: Path) -> list[dict]:
-    if not dataset_dir.exists():
-        return []
-
-    samples = []
-    for path in sorted(dataset_dir.rglob("*")):
-        if not path.is_file():
-            continue
-        if path.suffix.lower().lstrip(".") not in ALLOWED_EXTENSIONS:
-            continue
-        label = infer_dataset_label(path, dataset_dir)
-        if label is None:
-            continue
-        samples.append(
-            {
-                "path": path,
-                "label": label,
-                "relative_path": str(path.relative_to(dataset_dir)),
-            }
-        )
-    return samples
-
-
-def dataset_signature(dataset_dir: Path, samples: list[dict]) -> tuple:
-    return tuple(
-        (
-            sample["relative_path"],
-            sample["label"],
-            sample["path"].stat().st_mtime_ns,
-            sample["path"].stat().st_size,
-        )
-        for sample in samples
-    )
-
-
-def compute_binary_metrics(y_true: np.ndarray, y_score: np.ndarray, threshold: float = 0.5) -> dict[str, float | int]:
-    y_pred = (y_score >= threshold).astype(int)
-    tp = int(np.sum((y_true == 1) & (y_pred == 1)))
-    tn = int(np.sum((y_true == 0) & (y_pred == 0)))
-    fp = int(np.sum((y_true == 0) & (y_pred == 1)))
-    fn = int(np.sum((y_true == 1) & (y_pred == 0)))
-
-    accuracy = (tp + tn) / max(len(y_true), 1)
-    precision = tp / max(tp + fp, 1)
-    recall = tp / max(tp + fn, 1)
-    if precision + recall == 0:
-        f1_score = 0.0
-    else:
-        f1_score = (2 * precision * recall) / (precision + recall)
-
-    return {
-        "tp": tp,
-        "tn": tn,
-        "fp": fp,
-        "fn": fn,
-        "accuracy": float(accuracy * 100),
-        "precision": float(precision * 100),
-        "recall": float(recall * 100),
-        "f1_score": float(f1_score * 100),
-    }
-
-
-def compute_roc_curve(y_true: np.ndarray, y_score: np.ndarray) -> tuple[list[float], list[float], float]:
-    if len(np.unique(y_true)) < 2:
-        return [0.0, 1.0], [0.0, 1.0], 0.0
-
-    thresholds = np.r_[1.01, np.sort(np.unique(y_score))[::-1], -0.01]
-    fpr_points = []
-    tpr_points = []
-
-    for threshold in thresholds:
-        y_pred = (y_score >= threshold).astype(int)
-        tp = np.sum((y_true == 1) & (y_pred == 1))
-        tn = np.sum((y_true == 0) & (y_pred == 0))
-        fp = np.sum((y_true == 0) & (y_pred == 1))
-        fn = np.sum((y_true == 1) & (y_pred == 0))
-
-        tpr = tp / max(tp + fn, 1)
-        fpr = fp / max(fp + tn, 1)
-        tpr_points.append(float(tpr))
-        fpr_points.append(float(fpr))
-
-    paired_points = sorted(zip(fpr_points, tpr_points), key=lambda item: item[0])
-    sorted_fpr = [point[0] for point in paired_points]
-    sorted_tpr = [point[1] for point in paired_points]
-    auc = float(np.trapezoid(sorted_tpr, sorted_fpr))
-    return sorted_fpr, sorted_tpr, auc
-
-
-def compute_visual_only_probability(visual_features: dict[str, float]) -> float:
-    blended = blend_candidate_and_visual_probability(0.5, visual_features)
-    return float(blended["abnormal_probability"])
-
-
-def generate_roc_and_convergence_plot(
-    roc_curves: list[dict],
-    convergence_history: list[float],
-    output_path: Path,
-) -> None:
-    figure, axes = plt.subplots(1, 2, figsize=(12.5, 4.6), facecolor="#fffaf4")
-    roc_axis, convergence_axis = axes
-
-    roc_axis.set_facecolor("#f7efe6")
-    convergence_axis.set_facecolor("#f7efe6")
-
-    palette = ["#ae4f2f", "#2f6f4f", "#3b6790", "#6c5b7b", "#f67280"]
-    for index, curve in enumerate(roc_curves):
-        roc_axis.plot(
-            curve["fpr"],
-            curve["tpr"],
-            color=palette[index % len(palette)],
-            linewidth=2.2,
-            label=f'{curve["label"]} (AUC {curve["auc"]:.3f})',
-        )
-    roc_axis.plot([0, 1], [0, 1], linestyle="--", linewidth=1.2, color="#715f53", alpha=0.75)
-    roc_axis.set_xlim(0, 1)
-    roc_axis.set_ylim(0, 1)
-    roc_axis.set_xlabel("False Positive Rate", color="#2b211c")
-    roc_axis.set_ylabel("True Positive Rate", color="#2b211c")
-    roc_axis.set_title("ROC Curve", color="#2b211c", fontsize=13, pad=10)
-    roc_axis.grid(linestyle="--", linewidth=0.8, alpha=0.3, color="#715f53")
-    roc_axis.legend(loc="lower right", fontsize=8, frameon=False)
-
-    generations = list(range(1, len(convergence_history) + 1))
-    convergence_axis.plot(generations, convergence_history, color="#7f351d", linewidth=2.6, marker="o")
-    convergence_axis.fill_between(generations, convergence_history, color="#ae4f2f", alpha=0.14)
-    convergence_axis.set_xlabel("Generation", color="#2b211c")
-    convergence_axis.set_ylabel("Average Best Fitness", color="#2b211c")
-    convergence_axis.set_title("GA Convergence", color="#2b211c", fontsize=13, pad=10)
-    convergence_axis.grid(linestyle="--", linewidth=0.8, alpha=0.3, color="#715f53")
-    convergence_axis.set_xticks(generations)
-
-    for axis in axes:
-        axis.tick_params(axis="x", colors="#2b211c")
-        axis.tick_params(axis="y", colors="#2b211c")
-        for spine in axis.spines.values():
-            spine.set_color("#d6c2a8")
-
-    figure.tight_layout()
-    figure.savefig(output_path, dpi=140, bbox_inches="tight")
-    plt.close(figure)
-
-
-def generate_confusion_matrix_plot(confusion: dict[str, int], output_path: Path) -> None:
-    matrix = np.array(
-        [
-            [confusion["tn"], confusion["fp"]],
-            [confusion["fn"], confusion["tp"]],
-        ],
-        dtype="float32",
-    )
-
-    figure, axis = plt.subplots(figsize=(4.8, 4.4), facecolor="#fffaf4")
-    axis.set_facecolor("#f7efe6")
-    heatmap = axis.imshow(matrix, cmap="OrRd")
-    figure.colorbar(heatmap, ax=axis, fraction=0.046, pad=0.04)
-
-    axis.set_xticks([0, 1], labels=["Healthy", "Ulcer"])
-    axis.set_yticks([0, 1], labels=["Healthy", "Ulcer"])
-    axis.set_xlabel("Predicted Label", color="#2b211c")
-    axis.set_ylabel("True Label", color="#2b211c")
-    axis.set_title("Confusion Matrix", color="#2b211c", fontsize=13, pad=10)
-
-    for row in range(2):
-        for col in range(2):
-            axis.text(
-                col,
-                row,
-                f"{int(matrix[row, col])}",
-                ha="center",
-                va="center",
-                color="#2b211c",
-                fontsize=12,
-                fontweight="bold",
-            )
-
-    axis.tick_params(axis="x", colors="#2b211c")
-    axis.tick_params(axis="y", colors="#2b211c")
-    for spine in axis.spines.values():
-        spine.set_color("#d6c2a8")
-
-    figure.tight_layout()
-    figure.savefig(output_path, dpi=140, bbox_inches="tight")
-    plt.close(figure)
-
-
-def build_metrics_row(label: str, y_true: np.ndarray, y_score: np.ndarray) -> dict[str, float | str]:
-    metrics = compute_binary_metrics(y_true, y_score)
-    _, _, auc = compute_roc_curve(y_true, y_score)
-    return {
-        "label": label,
-        "accuracy": metrics["accuracy"],
-        "precision": metrics["precision"],
-        "recall": metrics["recall"],
-        "f1_score": metrics["f1_score"],
-        "auc": auc * 100,
-    }
-
-
-def evaluate_dataset(dataset_dir: Path) -> dict | None:
-    samples = collect_dataset_samples(dataset_dir)
-    if not samples:
-        return None
-
-    signature = dataset_signature(dataset_dir, samples)
-    if DATASET_CACHE["signature"] == signature:
-        return DATASET_CACHE["result"]
-
-    y_true = []
-    method_scores = {
-        "MobileNetV2 + Adam": [],
-        "EfficientNetB0 + SGD": [],
-        "DenseNet121 + RMSprop": [],
-        "Equal-Weight Ensemble": [],
-        "Equal-Weight Ensemble + Visual": [],
-        "GA Ensemble Only": [],
-        "Proposed GA + Visual": [],
-        "Visual Heuristics Only": [],
-    }
-    convergence_histories = []
-
-    for sample in samples:
-        candidates, _, visual_features = run_candidate_models(sample["path"])
-        ensemble = genetic_ensemble_selection(candidates)
-        skin_assessment = build_skin_assessment(candidates, ensemble, visual_features)
-
-        candidate_map = {candidate["model_name"]: float(candidate["abnormal_probability"]) / 100.0 for candidate in candidates}
-        equal_weight_probability = float(np.mean(list(candidate_map.values())))
-        equal_weight_with_visual = blend_candidate_and_visual_probability(equal_weight_probability, visual_features)
-        ga_only_probability = float(skin_assessment["debug_scores"]["candidate_ulcer_probability"]) / 100.0
-        proposed_probability = float(skin_assessment["abnormal_probability"]) / 100.0
-        visual_only_probability = compute_visual_only_probability(visual_features)
-
-        y_true.append(sample["label"])
-        method_scores["MobileNetV2 + Adam"].append(candidate_map.get("MobileNetV2", equal_weight_probability))
-        method_scores["EfficientNetB0 + SGD"].append(candidate_map.get("EfficientNetB0", equal_weight_probability))
-        method_scores["DenseNet121 + RMSprop"].append(candidate_map.get("DenseNet121", equal_weight_probability))
-        method_scores["Equal-Weight Ensemble"].append(equal_weight_probability)
-        method_scores["Equal-Weight Ensemble + Visual"].append(float(equal_weight_with_visual["abnormal_probability"]))
-        method_scores["GA Ensemble Only"].append(ga_only_probability)
-        method_scores["Proposed GA + Visual"].append(proposed_probability)
-        method_scores["Visual Heuristics Only"].append(visual_only_probability)
-        convergence_histories.append(ensemble.get("convergence_history", []))
-
-    y_true_array = np.array(y_true, dtype=int)
-    method_arrays = {label: np.array(scores, dtype="float32") for label, scores in method_scores.items()}
-
-    comparison_rows = [
-        build_metrics_row("MobileNetV2 + Adam", y_true_array, method_arrays["MobileNetV2 + Adam"]),
-        build_metrics_row("EfficientNetB0 + SGD", y_true_array, method_arrays["EfficientNetB0 + SGD"]),
-        build_metrics_row("DenseNet121 + RMSprop", y_true_array, method_arrays["DenseNet121 + RMSprop"]),
-        build_metrics_row("Equal-Weight Ensemble", y_true_array, method_arrays["Equal-Weight Ensemble"]),
-        build_metrics_row("Proposed GA + Visual", y_true_array, method_arrays["Proposed GA + Visual"]),
-    ]
-
-    ablation_rows = [
-        build_metrics_row("Visual Heuristics Only", y_true_array, method_arrays["Visual Heuristics Only"]),
-        build_metrics_row("Equal-Weight Ensemble", y_true_array, method_arrays["Equal-Weight Ensemble"]),
-        build_metrics_row("Equal-Weight Ensemble + Visual", y_true_array, method_arrays["Equal-Weight Ensemble + Visual"]),
-        build_metrics_row("GA Ensemble Only", y_true_array, method_arrays["GA Ensemble Only"]),
-        build_metrics_row("Proposed GA + Visual", y_true_array, method_arrays["Proposed GA + Visual"]),
-    ]
-
-    proposed_metrics = compute_binary_metrics(y_true_array, method_arrays["Proposed GA + Visual"])
-    proposed_fpr, proposed_tpr, proposed_auc = compute_roc_curve(y_true_array, method_arrays["Proposed GA + Visual"])
-    equal_fpr, equal_tpr, equal_auc = compute_roc_curve(y_true_array, method_arrays["Equal-Weight Ensemble"])
-    mobile_fpr, mobile_tpr, mobile_auc = compute_roc_curve(y_true_array, method_arrays["MobileNetV2 + Adam"])
-    efficient_fpr, efficient_tpr, efficient_auc = compute_roc_curve(y_true_array, method_arrays["EfficientNetB0 + SGD"])
-    dense_fpr, dense_tpr, dense_auc = compute_roc_curve(y_true_array, method_arrays["DenseNet121 + RMSprop"])
-
-    max_history_length = max((len(history) for history in convergence_histories), default=0)
-    average_convergence = []
-    for index in range(max_history_length):
-        generation_values = [history[index] for history in convergence_histories if index < len(history)]
-        average_convergence.append(float(np.mean(generation_values)) if generation_values else 0.0)
-
-    UPLOAD_DIR.mkdir(exist_ok=True)
-    roc_plot_path = UPLOAD_DIR / "dataset_roc_convergence.png"
-    confusion_plot_path = UPLOAD_DIR / "dataset_confusion_matrix.png"
-
-    generate_roc_and_convergence_plot(
-        [
-            {"label": "Proposed", "fpr": proposed_fpr, "tpr": proposed_tpr, "auc": proposed_auc},
-            {"label": "Equal-Weight Ensemble", "fpr": equal_fpr, "tpr": equal_tpr, "auc": equal_auc},
-            {"label": "MobileNetV2", "fpr": mobile_fpr, "tpr": mobile_tpr, "auc": mobile_auc},
-            {"label": "EfficientNetB0", "fpr": efficient_fpr, "tpr": efficient_tpr, "auc": efficient_auc},
-            {"label": "DenseNet121", "fpr": dense_fpr, "tpr": dense_tpr, "auc": dense_auc},
-        ],
-        average_convergence,
-        roc_plot_path,
-    )
-    generate_confusion_matrix_plot(proposed_metrics, confusion_plot_path)
-
-    result = {
-        "dataset_dir": str(dataset_dir),
-        "sample_count": len(samples),
-        "healthy_count": int(np.sum(y_true_array == 0)),
-        "ulcer_count": int(np.sum(y_true_array == 1)),
-        "roc_plot_url": f"/uploaded_images/{roc_plot_path.name}",
-        "confusion_plot_url": f"/uploaded_images/{confusion_plot_path.name}",
-        "comparison_rows": comparison_rows,
-        "ablation_rows": ablation_rows,
-        "proposed_metrics": {
-            "accuracy": proposed_metrics["accuracy"],
-            "precision": proposed_metrics["precision"],
-            "recall": proposed_metrics["recall"],
-            "f1_score": proposed_metrics["f1_score"],
-            "auc": proposed_auc * 100,
-            "tp": proposed_metrics["tp"],
-            "tn": proposed_metrics["tn"],
-            "fp": proposed_metrics["fp"],
-            "fn": proposed_metrics["fn"],
-        },
-    }
-
-    DATASET_CACHE["signature"] = signature
-    DATASET_CACHE["result"] = result
-    return result
-
-
 def analyze_uploaded_image(image_path: Path) -> tuple[list[dict], dict, dict, dict, float]:
     candidates, total_elapsed_ms, visual_features = run_candidate_models(image_path)
     ensemble = genetic_ensemble_selection(candidates)
@@ -913,7 +537,6 @@ def index():
     debug_plot_url = None
     metrics_plot_url = None
     classification_metrics = None
-    dataset_evaluation = evaluate_dataset(EVALUATION_DATASET_DIR)
 
     if request.method == "POST":
         image = request.files.get("image")
@@ -958,7 +581,6 @@ def index():
         debug_plot_url=debug_plot_url,
         metrics_plot_url=metrics_plot_url,
         classification_metrics=classification_metrics,
-        dataset_evaluation=dataset_evaluation,
         chart_candidate_results=[
             {
                 "model_name": candidate["model_name"],
